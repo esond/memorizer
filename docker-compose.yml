@@ -8,7 +8,7 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=postgmem
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -37,6 +37,13 @@ services:
       - "11434:11434"
     volumes:
       - ollama-data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
   # Initialize Ollama with the required models
   ollama-init:
@@ -53,7 +60,7 @@ services:
       echo 'Pulling embedding model...' &&
       for i in 1 2 3 4 5; do
         echo 'Attempting to pull embedding model (try '$$i'/5)...' &&
-        if curl -s -X POST http://ollama:11434/api/pull -d '{\"name\": \"all-minilm:33m-l12-v2-fp16\"}'; then
+        if curl -s -X POST http://ollama:11434/api/pull -d '{\"name\": \"qwen3-embedding:0.6b\"}'; then
           echo 'Embedding model pull initiated successfully' &&
           break
         fi &&
@@ -84,7 +91,7 @@ services:
     environment:
       - ConnectionStrings__Storage=Host=postgres;Port=5432;Database=postgmem;Username=postgres;Password=postgres
       - MEMORIZER_Embeddings__ApiUrl=http://ollama:11434
-      - MEMORIZER_Embeddings__Model=all-minilm:33m-l12-v2-fp16
+      - MEMORIZER_Embeddings__Model=qwen3-embedding:0.6b
       - MEMORIZER_LLM__ApiUrl=http://ollama:11434
       - MEMORIZER_LLM__Model=qwen2:0.5b
       - MEMORIZER_LLM__Timeout=00:02:00
